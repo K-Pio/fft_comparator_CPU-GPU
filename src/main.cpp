@@ -13,7 +13,11 @@
 
 #include "wav_signal.hpp"
 
-constexpr double M_PI = 3.14159265358979323846;
+// constexpr double M_PI = 3.14159265358979323846;
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 
 struct TimedResult
 {

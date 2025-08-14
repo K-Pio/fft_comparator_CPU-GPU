@@ -19,7 +19,7 @@ if(MSVC)
   set(cuda_flags -Xcompiler=/W4)
 else()
   set(cpp_flags -Wall -Wextra -Werror)
-  set(cuda_flags -Wall;-Wextra;-Werror)
+  set(cuda_flags -Xcompiler=-Wall;-Xcompiler=-Wextra;-Xcompiler=-Werror)
 endif()
 
 # FetchContent: CLI11 | Find FFTW3 i cuFFT
@@ -31,8 +31,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(CLI11)
 
-find_package(FFTW3 CONFIG REQUIRED)
 find_package(CUDAToolkit REQUIRED)
+find_package(FFTW3 QUIET)
 
 #
 add_executable(fft_comparator
@@ -42,16 +42,38 @@ add_executable(fft_comparator
   src/wav_signal.cpp
 )
 
+
+if(FFTW3_FOUND)
+    message(STATUS "Found FFTW: ${FFTW3_LIBRARIES}")
+    target_include_directories(fft_comparator PRIVATE ${FFTW3_INCLUDE_DIRS})
+    target_link_libraries(fft_comparator PRIVATE ${FFTW3_LIBRARIES})
+else()
+    message(WARNING "FFTW not found, falling back to manual configuration")
+
+    # Ręczne ścieżki — możesz je ustawić przez zmienne lub domyślnie
+    # set(FFTW3_INCLUDE_DIR /usr/include)
+    # set(FFTW3_LIBRARY /usr/lib/x86_64-linux-gnu/libfftw3.so)
+    # FFTW3 manual integration
+    include_directories(/usr/include)
+    link_directories(/usr/lib/x86_64-linux-gnu)
+    set(FFTW3_INCLUDE_DIR /usr/include)
+
+    target_include_directories(fft_comparator PRIVATE ${FFTW3_INCLUDE_DIR})
+    target_link_libraries(fft_comparator PRIVATE fftw3)
+
+endif()
+
+
+
+
 #Include directories
 target_include_directories(fft_comparator PRIVATE
-  ${FFTW3_INCLUDE_DIRS}
   ${CUDA_TOOLKIT_ROOT_DIR}/include
   ${CMAKE_SOURCE_DIR}/include
 )
 
 # Link libraries
 target_link_libraries(fft_comparator PRIVATE
-  FFTW3::fftw3
   CUDA::cufft
   CLI11::CLI11
 )
